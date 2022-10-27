@@ -184,7 +184,7 @@ function Get-ClusterVMs {
             
             Get-VMNetworkAdapter -ComputerName $Node -VMName $VMName | ForEach-Object {
                 $NetworkAdapter = $_.Name -join ';'
-                $MacAddress     = ($_.MacAddress).Replace('..(?!$)', '$&:') -join ';'
+                $MacAddress     = $_.MacAddress -Replace '..(?!$)', '$&:' -join ';'
             }
 
             Get-VHD -ComputerName $Node -VMId $GetVM.VMId | ForEach-Object {
