@@ -73,11 +73,11 @@ function Get-DellWarranty {
         $Global:Token = $null
 
         if (-Not ($DellApiKey)) {
-            $DellApiKey = "l72043a1bd329c4508a038acf7cc73b961"
+            $DellApiKey = ""
         }
 
         if (-Not ($DellApiSecret)) {
-            $DellApiSecret = "098a4eb8c7494be3bdcdb93ef6e33064"
+            $DellApiSecret = ""
         }
 
         if (-Not ($Token)) {
