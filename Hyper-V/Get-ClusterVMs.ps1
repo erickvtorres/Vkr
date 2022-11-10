@@ -1,213 +1,211 @@
 <#
-.DESCRIPTION
+.SYNOPSIS
+    Export VM resources from Failover Cluster Hyper-V
 
-Gather basics informations from Windows VMs hosted on Hyper-V and Cluster Hyper-V.
+.DESCRIPTION
+    Gather virtual machines hardware, network, operating system, status ans configuration.
+    All objects are changed to export to xlsx/csv without need to convert array to string.
+    A better way to export this information, is using ImportExcel Module with bellow parameters
+
+    $Excel = @{
+        Path               = 'C:\Reports\Cluster.xlsx'
+        WorksheetName      = 'VMs'
+        Append             = $true
+        TitleBold          = $true
+        AutoSize           = $true
+        AutoFilter         = $true
+        FreezeTopRow       = $true
+        TableStyle         = 'Light8'
+        NoNumberConversion = '*'
+    }
 
 .LINK
-
-    .Linkedin:      https://www.linkedin.com/in/erickvtorres/
-    .GitHub:        https://github.com/erickvtorres
+    Linkedin    : https://www.linkedin.com/in/erickvtorres/
+    GitHub      : https://github.com/erickvtorres
 
 .NOTES
-
-Powershell [7] Core  required.
-Depending on your Windows Version, the Hyper-V module could be incompatible whit eldest Windows Servers.
-To change values with ; to array, remove -join ';'
-
-    .Creator:       Erick Torres do Vale
-    .Contact:       ericktorres@hotmail.com.br
-    .Date:          2021-12-14
-    .LastUpdate:    2022-10-27
-    .Version:       1.0
+    Creator     : Erick Torres do Vale
+    Contact     : ericktorres@hotmail.com.br
+    Date        : 2021-12-14
+    LastUpdate  : 2022-11-10
+    Version     : 1.6
 
 .EXAMPLE
 
-    Get-ClusterVMs -Server CLUSTERNAME
-    Get-ClusterVMs -Server CLUSTERNAME -Name VMNAME
-    Get-ClusterVMs -Server CLUSTERNAME -Export C:\Temp\ClusterVMs.xlsx  # Include All Properties
-    Get-ClusterVMs -Server CLUSTERNAME | Select-Object Name,MemoryAssigned,vCPUs,DiskSize,Uptime
-    Get-ClusterVMs -Server CLUSTERNAME | Export-CSV -Path C:\Temp\ClusterVMs.csv -Append -Force -NoTypeInformation
-    Get-ClusterVMs -File  #Choose an csv file.
-
-    CSV File example:
-    vmname01,clustername    # Search in all nodes
-    vmname01,nodename01     # Faster
-    vmname02,nodename02     # Faster
+    Get-ClusterVMs -ComputerName <server>
+    Get-ClusterVMs -ComputerName <server> -VMName <vmname>
+    Get-ClusterVMs -ComputerName <server> | Select-Object Name,Memory,vCPU,VhdSize,Uptime
+    Get-ClusterVMs -ComputerName <server> | Export-CSV -Path C:\Temp -Append
+    Get-ClusterVMs -ComputerName <server> | Export-Excel C:\Repors\$ComputerName.xlsx -WorksheetName $ComputerName -Append -TitleBold -AutoSize -AutoFilter -FreezeTopRow -TableStyle Light8 -NoNumberConversion *
 #>
 
-#Requires -PSEdition Core -Modules ActiveDirectory,ImportExcel,Hyper-V
-Import-Module ActiveDirectory,Hyper-V,ImportExcel
+#Requires -PSEdition Core -Modules ActiveDirectory,Hyper-V
+Import-Module ActiveDirectory, Hyper-V
 
-function Get-FileName ($spath) {
-    $spath = $ReportsCsv
-    [System.Reflection.Assembly]::LoadWithPartialName("System.windows.forms") | Out-Null
-    $OpenFileDialog = New-Object System.Windows.Forms.OpenFileDialog
-    $OpenFileDialog.initialDirectory = $spath
-    $OpenFileDialog.filter = "CSV (*.csv) | *.csv"
-    $OpenFileDialog.ShowDialog() | Out-Null
-    $OpenFileDialog.FileName
-}
 function Get-ClusterVMs {
-    [CmdletBinding(DefaultParameterSetName = 'Server')]
+    [CmdletBinding(DefaultParameterSetName = 'ComputerName')]
     param (
-        [Parameter(Position = 0, ParameterSetName = 'Server')]
-        [Alias('ComputerName', 'Host', 'Cluster', 'Hyper-V')]
-        [string] $Server,
+        [Parameter(
+            Mandatory = $true,
+            Position = 0,
+            ValueFromPipeline = $true,
+            ParameterSetName = 'ComputerName'
+        )]
+        [string]
+        $ComputerName,
 
-        [Parameter(Position = 1)]
-        [Alias('CSV', 'FromCSV', 'FromFile', 'Import')]
-        [switch] $File,
-
-        [Parameter(Position = 1)]
-        [Alias('VMName', 'Machine')]
-        [string] $Name,
-
-        [Parameter(Position = 2)]
-        [Alias('Save', 'ExportTo')]
-        [string] $Export
+        [Parameter(
+            Mandatory = $false,
+            Position = 1
+        )]
+        [string]
+        $VMName
     )
     
     begin {
-        $Result = @()
-        $VMs = @()
+        $VMs = New-Object -TypeName System.Collections.ArrayList
 
-        if (-Not ($PSBoundParameters.ContainsKey('File'))){
-            try {
-                Get-Cluster -Name $Server -ErrorAction Stop | Out-Null
-                $ClusterNodes = (Get-ClusterNode -Cluster $Server).Name
-            }
-            Catch {
-                Write-Host $_.Exception.Message -ForegroundColor Red
-            }
+        try {
+            Get-Cluster -Name $ComputerName -ErrorAction Stop | Out-Null
+            $ClusterNodes = (Get-ClusterNode -Cluster $ComputerName).Name
+        }
+        Catch {
+            Write-Warning $_.Exception.Message
+            Break
         }
 
-        if ($PSBoundParameters.ContainsKey('File')) {
+        if ($PSBoundParameters.ContainsKey('VMName')) {
             try {
-                $FilePath = Import-Csv -Path (Get-FileName) -Header VMName,Server
-                $VMsList = @()
-                foreach ($x in $FilePath) {
-                    $VMsList += Get-VM -ComputerName $x.Server -VMName $x.VMName -ErrorAction Stop  | Select-Object Name,@{Label = "Node"; Expression = "ComputerName"}
+                Get-VM -ComputerName $ComputerName -VMName $VMName -ErrorAction Stop | ForEach-Object {
+                    $Query = [PSCustomObject]@{
+                        Name = $_.VMName
+                        Node = $_.ComputerName
+                    }
+                    [void]$VMs.Add($Query)
                 }
-                $VMsList = $VMsList | Sort-Object Name
             }
             catch {
-                Write-Host $_.Exception.Message -ForegroundColor Red
-                Break
-            }
-        }
-        elseif ($PSBoundParameters.ContainsKey('Name')) {
-            try {
-                $VMsList = Get-VM -ComputerName $Server -VMName $Name -ErrorAction Stop | Select-Object Name,@{Label = "Node"; Expression = "ComputerName"}
-            }
-            catch {
-                Write-Host $_.Exception.Message -ForegroundColor Red
+                Write-Warning $_.Exception.Message
                 Break
             }
         }
         else {
             try {
                 $SyncNodes = [System.Collections.Hashtable]::Synchronized(@{i = 1 })
-                $VMsList = $ClusterNodes | ForEach-Object -Parallel {
+                $ClusterNodes | ForEach-Object -Parallel {
                     $Node = $_
                     $Nodes = $USING:ClusterNodes
                     $Progress = $USING:SyncNodes
-                    $Server = $USING:Server
+                    $ComputerName = $USING:ComputerName
+                    $VMs = $USING:VMs
                     $Count = $Progress.i
                     $Progress.i++
 
-                    $WriteFirstProgress = @{
-                        Activity            = "Working on $($Server)"
-                        Status              = "$($Node)    |    $($Count) of $($Nodes.Count)"
-                        CurrentOperation    = $Node
-                        PercentComplete     = (($Count / $Nodes.Count) * 100)
+                    $ProgressBegin = @{
+                        Id               = 1
+                        Activity         = "Working on $ComputerName"
+                        Status           = "$Node | $Count of $($Nodes.Count)"
+                        CurrentOperation = $Node
+                        PercentComplete  = (($Count / $Nodes.Count) * 100)
                     }
 
-                    Write-Progress @WriteFirstProgress
+                    Write-Progress @ProgressBegin
 
                     Get-VM -ComputerName $Node | ForEach-Object {
-                        $List = $USING:VMs
-                        $List += [PSCustomObject]@{
+                        $List = [PSCustomObject]@{
                             Name = $_.VMName
                             Node = $Node
                         }
-                        return $List
+                        [void]$VMs.Add($List)
                     }
                 }
-                $VMsList = $VMsList | Sort-Object Node, Name
+                $VMs = $VMs | Sort-Object Node, Name
             }
             catch {
-                Write-Host $_.Exception.Message -ForegroundColor Red
+                Write-Warning $_.Exception.Message
                 Break
             }
-            Write-Progress -Activity "Working on $($Server)" -Status "Ready" -Completed
+            Write-Progress -Id 1 -Activity 'Completed' -Status 'Ready' -Completed
         }
     }
     
     process {
         $Sync = [System.Collections.Hashtable]::Synchronized(@{i = 1 })
-        $VMsResult = $VMsList | ForEach-Object -Parallel {
-            $VMName = $_.Name
-            $Node = $_.Node
-            $Items = $USING:VMsList
+        $VMs | ForEach-Object -Parallel {
+            $Items = $USING:VMs
             $Progress = $USING:Sync
             $Count = $Progress.i
-            $Progress.i++
             $Percent = ($Count / $Items.Count) * 100
-            $Percent = "{0:N2}" -f ($Percent)
+            $Percent = '{0:N2}' -f ($Percent)
+            $Progress.i++
 
-            $WriteSecondProgress = @{
-                Activity            = "Working on $($Node)"
-                Status              = "$($VMName)    |    $($Count) of $($Items.Count)    |    $($Percent)%"
-                CurrentOperation    = $Node
-                PercentComplete     = (($Count / $Items.Count) * 100)
+
+            if (-Not ($PSBoundParameters.ContainsKey('Name'))) {
+                $ProgressProcess = @{
+                    Id               = 2
+                    Activity         = "Working on $($_.Node)"
+                    Status           = "$($_.Name) | $Count of $($Items.Count) | $Percent%"
+                    CurrentOperation = $($_.Node)
+                    PercentComplete  = (($Count / $Items.Count) * 100)
+                }
+                Write-Progress @ProgressProcess
             }
 
-            Write-Progress @WriteSecondProgress
-
+            $GetVM = Get-VM -ComputerName $($_.Node) -VMName $($_.Name)
+            
+            $OSName = New-Object -TypeName pscustomobject
             try {
-                $OS = (Get-ADComputer -Identity $VMName -Properties OperatingSystem).OperatingSystem
+                Get-ADComputer -Identity $($_.Name) -Properties operatingSystem, operatingSystemVersion -ErrorAction Stop | ForEach-Object {
+                    $OSName | Add-Member -MemberType NoteProperty -Name 'Name' -Value $_.operatingSystem
+                    $OSName | Add-Member -MemberType NoteProperty -Name 'Version' -Value $_.operatingSystemVersion
+                }
             }
             catch {
-                $OS = "Not Windows or Not Domain Joined"
+                $OSName | Add-Member -MemberType NoteProperty -Name 'Name' -Value 'Not found'
+                $OSName | Add-Member -MemberType NoteProperty -Name 'Version' -Value 'Not found'
             }
-
-            $GetVM = Get-VM -ComputerName $Node -VMName $VMName
+            
+            $Network = New-Object -TypeName pscustomobject
             $GetVM | ForEach-Object {
-                $IPAddresses    = ($($_.NetworkAdapters).IPAddresses | Where-Object {$_ -notmatch "::"} ) -join ';'
-                $SwitchName     = $($_.NetworkAdapters).SwitchName -join ';'
+                $Network | Add-Member -MemberType NoteProperty -Name 'IPAddresses' -Value ($Ip = [array]$Ip += ($_.NetworkAdapters.IPAddresses | Where-Object { $_ -notmatch '::' } )) -Force
+                $Network | Add-Member -MemberType NoteProperty -Name 'SwitchName' -Value ($Switch = [array]$Switch += $_.NetworkAdapters.SwitchName) -Force
             }
-
-            Get-VMNetworkAdapterVlan -ComputerName $Node -VMName $VMName | ForEach-Object {
-                $AccessVlanId   = $_.AccessVlanId -join ';'
-                $OperationMode  = $_.OperationMode -join ';'
-            }
-            
-            Get-VMNetworkAdapter -ComputerName $Node -VMName $VMName | ForEach-Object {
-                $NetworkAdapter = $_.Name -join ';'
-                $MacAddress     = $_.MacAddress -Replace '..(?!$)', '$&:' -join ';'
-            }
-
-            Get-VHD -ComputerName $Node -VMId $GetVM.VMId | ForEach-Object {
-                $VHDX = "{0:N2}" -f ($_.Size / 1024Mb) -join ';'
+            Get-VMNetworkAdapterVlan -ComputerName $($_.Node) -VMName $($_.Name) | ForEach-Object {
+                $Network | Add-Member -MemberType NoteProperty -Name 'AccessVlanId' -Value ($VlanId = [array]$VlanId += $_.AccessVlanId) -Force
+                $Network | Add-Member -MemberType NoteProperty -Name 'OperationMode' -Value ($OperMode = [array]$OperMode += $_.OperationMode) -Force
             }
             
-            $ResultList = $USING:Result
-            $ResultList += [PSCustomObject]@{
+            Get-VMNetworkAdapter -ComputerName $($_.Node) -VMName $($_.Name) | ForEach-Object {
+                $Network | Add-Member -MemberType NoteProperty -Name 'NetworkAdapter' -Value ($Adapter = [array]$Adapter += $_.Name) -Force
+                $Network | Add-Member -MemberType NoteProperty -Name 'MacAddress' -Value ($Mac = [array]$Mac += $_.MacAddress -replace ('..(?!$)', '$&:')) -Force
+            }
+
+            $VHD = New-Object -TypeName pscustomobject
+            Get-VHD -ComputerName $($_.Node) -VMId $GetVM.VMId | ForEach-Object {
+                $VHD | Add-Member -MemberType NoteProperty -Name 'Size' -Value ($Size = [array]$Size += ('{0:N0}' -f ($_.Size / 1024Mb))) -Force
+                $VHD | Add-Member -MemberType NoteProperty -Name 'VhdFormat' -Value ($Format = [array]$Format += $_.VhdFormat) -Force
+                $VHD | Add-Member -MemberType NoteProperty -Name 'VhdType' -Value ($Type = [array]$Type += $_.VhdType) -Force
+            }
+            
+            [PSCustomObject]@{
                 Name                    = $GetVM.VMName
                 State                   = $GetVM.State
-                vCPUs                   = $GetVM.ProcessorCount
-                CPUUsage                = $GetVM.CPUUsage
-                RAM                     = "{0:N2}" -f ($GetVM.MemoryStartup / 1024Mb)
-                MemoryAssigned          = "{0:N2}" -f ($GetVM.MemoryAssigned / 1024Mb)
-                DiskSize                = $VHDX
-                OperatingSystem         = $OS
+                RAM                     = '{0:N0}' -f ($GetVM.MemoryStartup / 1024Mb)
+                MemoryAssigned          = '{0:N0}' -f ($GetVM.MemoryAssigned / 1024Mb)
+                vCPU                    = $GetVM.ProcessorCount
+                vCPUUsage               = $GetVM.CPUUsage
+                OSName                  = $OSName.Name
+                OSVersion               = $OSName.Version
                 Uptime                  = $GetVM.Uptime
-                IPAddresses             = $IPAddresses
-                SwitchName              = $SwitchName
-                AccessVlanId            = $AccessVlanId
-                OperationMode           = $OperationMode
-                NetworkAdapter          = $NetworkAdapter
-                MacAddress              = $MacAddress
+                VhdSize                 = ForEach-Object { $VHD.Size -join ',' }
+                VhdFormat               = ForEach-Object { $VHD.VhdFormat -join ',' }
+                VhdType                 = ForEach-Object { $VHD.VhdType -join ',' }
+                IPAddresses             = ForEach-Object { $Network.IPAddresses -join ',' }
+                SwitchName              = ForEach-Object { $Network.SwitchName -join ',' }
+                AccessVlanId            = ForEach-Object { $Network.AccessVlanId -join ',' }
+                OperationMode           = ForEach-Object { $Network.OperationMode -join ',' }
+                NetworkAdapter          = ForEach-Object { $Network.NetworkAdapter -join ',' }
+                MacAddress              = ForEach-Object { $Network.MacAddress -join ',' }
                 Status                  = $GetVM.Status
                 Generation              = $GetVM.Generation
                 Version                 = $GetVM.Version
@@ -218,17 +216,11 @@ function Get-ClusterVMs {
                 CheckpointFileLocation  = $GetVM.CheckpointFileLocation
                 ConfigurationLocation   = $GetVM.ConfigurationLocation
             }
-            Return $ResultList
         }
-        Write-Progress -Activity "Working on $($Node)" -Status "Ready" -Completed
     }
     
     end {
-        if ($PSBoundParameters.ContainsKey('Export')) {
-            $VMsResult | Export-Excel $Export -WorksheetName $Server -Append -TitleBold -AutoSize -AutoFilter -FreezeTopRow -TableStyle Light8 -NoNumberConversion *
-        }
-        else {
-            $VMsResult | Select-Object Name,State,vCPUs,CPUUsage,RAM,MemoryAssigned,Uptime,OperatingSystem | Format-Table
-        }
+        Write-Progress -Id 2 -Activity "Working on $($_.Node)" -Status 'Ready' -Completed
+        $VMs = $null
     }
 }
