@@ -8,6 +8,7 @@ Erick Torres :: <a href="https://www.linkedin.com/in/erickvtorres/">LinkedIn</a>
 - <strong><a href="https://github.com/erickvtorres/Vkr/blob/main/Active%20Directory/Get-FSMORoles.ps1">Get-FSMORoles</a>:</strong> Show where each FSMO is running.
 
   - <strong>Scripts by Objects</strong>
+  - <strong><a href="https://github.com/erickvtorres/Vkr/tree/main/Active%20Directory/User">User</a>:</strong> AD User management scritps
   - <strong><a href="https://github.com/erickvtorres/Vkr/tree/main/Active%20Directory/Computer">Computer</a>:</strong> AD Computer management scritps
 
 <strong>Hyper-V</strong>
