@@ -11,6 +11,8 @@ Erick Torres :: <a href="https://www.linkedin.com/in/erickvtorres/">LinkedIn</a>
   - <strong><a href="https://github.com/erickvtorres/Vkr/tree/main/Active%20Directory/User">User</a>:</strong> AD User management scritps
   - <strong><a href="https://github.com/erickvtorres/Vkr/tree/main/Active%20Directory/Computer">Computer</a>:</strong> AD Computer management scritps
 
+<strong>Microsoft 365</strong>
+
 <strong>Hyper-V</strong>
 - <strong><a href="https://github.com/erickvtorres/Vkr/blob/main/Hyper-V/Get-ClusterVMs.ps1">Get-ClusterVMs</a>:</strong> Export Cluster Hyper-V VMs easily.
 - <strong><a href="https://github.com/erickvtorres/Vkr/blob/main/Hyper-V/Set-VMResourceMetering.ps1">Set-VMResourceMetering</a>:</strong> Get status, enable or disable VM Resource Metering.
