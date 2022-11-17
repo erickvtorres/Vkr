@@ -1,8 +1,7 @@
 # Vkr | PowerShell Scripts!
 
 Hi,
-<p>Some of public scripts :)<br />
-Erick Torres :: <a href="https://www.linkedin.com/in/erickvtorres/">LinkedIn</a>
+<p>Uploading some of public scripts :)<br />
 
   <strong>Active Directory</strong>
 - <strong><a href="https://github.com/erickvtorres/Vkr/blob/main/Active%20Directory/Get-FSMORoles.ps1">Get-FSMORoles</a>:</strong> Show where each FSMO is running.
