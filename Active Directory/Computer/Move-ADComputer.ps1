@@ -90,7 +90,7 @@ function Move-ADComputer {
     
     begin {
         [bool]$WriteLog = $false
-        $LogFile        = $env:TEMP + "\Mode-ADComputer.log"
+        $LogFile        = $env:TEMP + "\Move-ADComputer.log"
         $Date           = Get-Date -Format 'dd-MM-yyyy'
     }
     
