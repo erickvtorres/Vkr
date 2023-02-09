@@ -18,6 +18,8 @@
 
 #Requires -Modules ActiveDirectory
 function Get-FSMORoles {
+    Import-Module -Name ActiveDirectory  
+    
     $ADForest = Get-ADADForest
     $ADDomain = Get-ADADDomain
 
