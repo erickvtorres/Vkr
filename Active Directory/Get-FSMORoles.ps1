@@ -2,8 +2,7 @@
 .SYNOPSIS
     Display where AD FSMOs is installed
 .DESCRIPTION
-    Move AD Computer object to desired OU without need to get DistinguishedName and disable 'ProtectedFromAccidentalDeletion'.
-    If use Import-Csv, the parameters ComputerName and Target must be in ther first line or explict in Import-CSV -Header
+    Get info from AD Forest and AD Domain and show only the FSMO Roles.
 .LINK
     Linkedin        : https://www.linkedin.com/in/erickvtorres
     GitHub          : https://github.com/erickvtorres
