@@ -23,7 +23,7 @@ function Get-FSMORoles {
 
     $FSMO = [PSCustomObject] @{
         'Schema Master'          = $ADForest.SchemaMaster
-        'ADDomain Naming Master' = $ADForest.ADDomainNamingMaster
+        'ADDomain Naming Master' = $ADForest.DomainNamingMaster
         'RID Master'             = $ADDomain.RIDMaster
         'PDC Emulator'           = $ADDomain.PDCEmulator
         'Infrastructure Master'  = $ADDomain.InfrastructureMaster
