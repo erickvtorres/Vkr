@@ -18,10 +18,8 @@
 
 #Requires -Modules ActiveDirectory
 function Get-FSMORoles {
-    Import-Module -Name ActiveDirectory  
-    
-    $ADForest = Get-ADADForest
-    $ADDomain = Get-ADADDomain
+    $ADForest = Get-ADForest
+    $ADDomain = Get-ADDomain
 
     $FSMO = [PSCustomObject] @{
         'Schema Master'          = $ADForest.SchemaMaster
