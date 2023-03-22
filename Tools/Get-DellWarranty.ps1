@@ -19,8 +19,8 @@
     .Creator:       Erick Torres do Vale
     .Contact:       ericktorres@hotmail.com.br
     .Date:          2022-10-31
-    .LastUpdate:    2022-10-31
-    .Version:       1.0
+    .LastUpdate:    2023-03-22
+    .Version:       1.0.1
 
 .PARAMETER
     -ServiceTag:
@@ -44,16 +44,16 @@ function Get-DellWarranty {
     [CmdletBinding(DefaultParameterSetName = 'ServiceTag')]
     param (
         [Parameter(
-            Position = 0,
-            Mandatory = $true,
+            Position          = 0,
+            Mandatory         = $true,
             ValueFromPipeline = $true,
-            HelpMessage = "Get-CimInstance -CimSession localhost -ClassName Win32_BIOS"
+            HelpMessage       = "Get-CimInstance -CimSession localhost -ClassName Win32_BIOS"
         )]
         [string]
         $ServiceTag,
 
         [Parameter(
-            Mandatory = $false,
+            Mandatory   = $false,
             HelpMessage = "Enter your Dell API Key"
         )]
         [string]
@@ -113,18 +113,20 @@ function Get-DellWarranty {
         }
         
         $DellApiReturn  = Invoke-RestMethod @ParamsResponse
-        $DellJson       = $DellApiReturn | ConvertTo-Json
-        $DellJson       = $DellJson | ConvertFrom-Json
+
+        if ($DellApiReturn.invalid -eq 'True'){
+            Write-Error -Message 'Invalid asset tag.'
+            break
+        }
 
         $Result = [PSCustomObject]@{
             ServiceTag      = $DellApiReturn.serviceTag
             Product         = (Get-Culture).TextInfo.ToTitleCase(($DellApiReturn.productLineDescription).toLower())
-            Support         = ($DellJson.entitlements | Select-Object -Last 1).serviceLevelDescription
+            Support         = ($DellApiReturn.entitlements | Select-Object -Last 1).serviceLevelDescription
             ShipDate        = $DellApiReturn.shipDate
-            Expire          = ($DellJson.entitlements | Select-Object -Last 1).endDate
-            Status          = if ((Get-Date) -ge ($DellJson.entitlements | Select-Object -Last 1).endDate){"Expired"} else {"Active"}
+            Expire          = ($DellApiReturn.entitlements | Select-Object -Last 1).endDate
+            Status          = if ((Get-Date) -ge ($DellApiReturn.entitlements | Select-Object -Last 1).endDate){"Expired"} else {"Active"}
         }
-
         Return $Result
     }
     
