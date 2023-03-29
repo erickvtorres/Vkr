@@ -114,17 +114,19 @@ function Send-TeamsGroupChat {
     
     process {
         $Members = New-Object -TypeName System.Collections.ArrayList
+        $Names   = New-Object -TypeName System.Collections.ArrayList
         try{
             $Identities | ForEach-Object {
                 $TeamsUser = Get-MgUser -UserId $_ -ErrorAction Stop
-                $TeamsUser
-                $Members.Add(
+                [void]$Members.Add(
                     @{
                         '@odata.type'     = '#microsoft.graph.aadUserConversationMember'
                         Roles             = @('owner')
                         'User@odata.bind' = "https://graph.microsoft.com/v1.0/users('" + $TeamsUser.id + "')"
                     }
                 )
+
+                [void]$Names.Add($TeamsUser.DisplayName)
             }
             
             $ChatParam = @{
@@ -148,7 +150,7 @@ function Send-TeamsGroupChat {
             }
 
             New-MgChatMessage -ChatId $ChatSession.ID -Body $Body -Importance $Importance
-            Write-Output "Teams chat message sent to $($TeamsUser.DisplayName)"
+            Write-Output "Teams group chat message sent to $($Names -join ', ')"
         }
         catch {
             Write-Warning -Message $_.Exception.Message
@@ -156,7 +158,7 @@ function Send-TeamsGroupChat {
     }
     
     end {
-        Disconnect-MgGraph
+        Disconnect-MgGraph | Out-Null
         $Token = $null
     }
 }
