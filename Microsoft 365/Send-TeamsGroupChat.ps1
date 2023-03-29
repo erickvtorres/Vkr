@@ -7,6 +7,9 @@
     Do not hard code your credentials, get from Azure Key Vault, it's almost free.
     Add these scopes to you application: 'Chat.Create','Chat.ReadWrite','User.Read','User.Read.All'
 
+    To keep messages in the same GrouChat, Get de ChatID generated after sending the first message
+    to use with ChatID parameter.
+
 .LINK
     .Linkedin:      https://www.linkedin.com/in/erickvtorres/
     .GitHub:        https://github.com/erickvtorres
@@ -28,6 +31,9 @@
     Accept HTML.
     Text you desire!
 
+.PARAMETER ChatID
+    ChatID from existing chat group
+
 .PARAMETER Importance
     Normal
         Chat like any other
@@ -38,6 +44,8 @@
     
 .EXAMPLE
     Send-TeamsChat -Identity erick@vkrinc.onmicrosoft.com,torres@vkrinc.onmicrosoft.com -Topic 'Vale Group' -Message 'Hello' -Importance Urgent
+    Send-TeamsChat -Identity erick@vkrinc.onmicrosoft.com,torres@vkrinc.onmicrosoft.com `
+    -Topic 'Vale Group' -Message 'Hello' -ChatID '19:2fexxxxxxxxxxxxxxxxxxxxxxxxxxx93@thread.v2' -Importance Urgent
 #>
 #Requires -Modules Microsoft.Graph.Teams
 
@@ -69,8 +77,15 @@ function Send-TeamsGroupChat {
             Position  = 3,
             Mandatory = $false
         )]
+        [string]
+        $ChatID,
+
+        [Parameter(
+            Position  = 4,
+            Mandatory = $false
+        )]
         [ValidateSet(
-            'Normal','High','Urgent'
+            'Normal', 'High', 'Urgent'
         )]
         [string]
         $Importance
@@ -79,12 +94,12 @@ function Send-TeamsGroupChat {
     begin {
         . 'C:\Unimed\pwsh\PRD\Get-Secret.ps1'
 
-        if (-Not $Importance){
+        if (-Not $Importance) {
             $Importance = 'Normal'
         }
 
-        if (-Not (Get-MgContext)){
-            $Body =  @{
+        if (-Not (Get-MgContext)) {
+            $Body = @{
                 Grant_Type    = 'password'
                 Scope         = 'https://graph.microsoft.com/.default'
                 Client_Id     = '<your client id>'
@@ -100,7 +115,7 @@ function Send-TeamsGroupChat {
             }
             
             $Connect = Invoke-RestMethod @Rest
-            $Token   = $Connect.access_token
+            $Token = $Connect.access_token
 
             try {
                 Connect-MgGraph -AccessToken $Token
@@ -115,42 +130,43 @@ function Send-TeamsGroupChat {
     process {
         $Members = New-Object -TypeName System.Collections.ArrayList
         $Names   = New-Object -TypeName System.Collections.ArrayList
-        try{
-            $Identities | ForEach-Object {
-                $TeamsUser = Get-MgUser -UserId $_ -ErrorAction Stop
-                [void]$Members.Add(
-                    @{
-                        '@odata.type'     = '#microsoft.graph.aadUserConversationMember'
-                        Roles             = @('owner')
-                        'User@odata.bind' = "https://graph.microsoft.com/v1.0/users('" + $TeamsUser.id + "')"
-                    }
-                )
-
-                [void]$Names.Add($TeamsUser.DisplayName)
+        try {
+            if (-Not $ChatID) {
+                $Identities | ForEach-Object {
+                    $TeamsUser = Get-MgUser -UserId $_ -ErrorAction Stop
+                    [void]$Members.Add(
+                        @{
+                            '@odata.type'     = '#microsoft.graph.aadUserConversationMember'
+                            Roles             = @('owner')
+                            'User@odata.bind' = "https://graph.microsoft.com/v1.0/users('" + $TeamsUser.id + "')"
+                        }
+                    )
+                    [void]$Names.Add($TeamsUser.DisplayName)
+                }
+                
+                $ChatParam = @{
+                    ChatType = 'group'
+                    Topic    = $Topic
+                    Members  = @(
+                        @{
+                            '@odata.type'     = '#microsoft.graph.aadUserConversationMember'
+                            Roles             = @('owner')
+                            'User@odata.bind' = "https://graph.microsoft.com/v1.0/users('" + (Get-MgUser -UserId (Get-MgContext).account).id + "')"
+                        }
+                        $Members
+                    )
+                }
+                
+                $ChatSession = New-MgChat -BodyParameter $ChatParam
+                $ChatID = $ChatSession.ID
             }
-            
-            $ChatParam = @{
-                ChatType = 'group'
-                Topic    = $Topic
-                Members  = @(
-                    @{
-                        '@odata.type'     = '#microsoft.graph.aadUserConversationMember'
-                        Roles             = @('owner')
-                        'User@odata.bind' = "https://graph.microsoft.com/v1.0/users('" + (Get-MgUser -UserId (Get-MgContext).account).id + "')"
-                    }
-                    $Members
-                )
-            }
-
-            $ChatSession = New-MgChat -BodyParameter $ChatParam
 
             $Body = @{
                 ContentType = 'html'
                 Content     = $Message
             }
 
-            New-MgChatMessage -ChatId $ChatSession.ID -Body $Body -Importance $Importance
-            Write-Output "Teams group chat message sent to $($Names -join ', ')"
+            New-MgChatMessage -ChatId $ChatID -Body $Body -Importance $Importance
         }
         catch {
             Write-Warning -Message $_.Exception.Message
