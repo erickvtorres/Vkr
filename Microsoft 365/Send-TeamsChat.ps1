@@ -42,30 +42,22 @@ function Send-TeamsChat {
     [CmdletBinding()]
     param (
         [Parameter(
-            Position                        = 0,
-            Mandatory                       = $true,
-            ValueFromPipeline               = $true,
-            ValueFromPipelineByPropertyName = $true
+            Position  = 0,
+            Mandatory = $true
         )]
         [string]
         $Identity,
 
         [Parameter(
-            Position                        = 1,
-            Mandatory                       = $true,
-            ValueFromPipeline               = $true,
-            ValueFromPipelineByPropertyName = $true,
-            ValueFromRemainingArguments     = $true
+            Position  = 1,
+            Mandatory = $true
         )]
         [string]
         $Message,
 
         [Parameter(
-            Position                        = 2,
-            Mandatory                       = $true,
-            ValueFromPipeline               = $true,
-            ValueFromPipelineByPropertyName = $true,
-            ValueFromRemainingArguments     = $true
+            Position  = 2,
+            Mandatory = $false
         )]
         [ValidateSet(
             'Normal','High','Urgent'
@@ -75,6 +67,10 @@ function Send-TeamsChat {
     )
     
     begin {
+        if (-Not $Importance){
+            $Importance = 'Normal'
+        }
+    
         if (-Not (Get-MgContext)){
             $Body =  @{
                 Grant_Type    = 'password'
