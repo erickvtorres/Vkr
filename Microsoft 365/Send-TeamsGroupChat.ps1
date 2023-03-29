@@ -131,6 +131,10 @@ function Send-TeamsGroupChat {
         $Members = New-Object -TypeName System.Collections.ArrayList
         $Names   = New-Object -TypeName System.Collections.ArrayList
         try {
+            if ($ChatID -and $Topic){
+                Update-MgChat -ChatId $ChatID -BodyParameter @{Topic = $Topic}
+            }
+            
             if (-Not $ChatID) {
                 $Identities | ForEach-Object {
                     $TeamsUser = Get-MgUser -UserId $_ -ErrorAction Stop
