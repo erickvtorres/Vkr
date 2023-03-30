@@ -43,9 +43,11 @@
         Send user an alert each 2 minutes until they read the message
     
 .EXAMPLE
-    Send-TeamsChat -Identity erick@vkrinc.onmicrosoft.com,torres@vkrinc.onmicrosoft.com -Topic 'Vale Group' -Message 'Hello' -Importance Urgent
-    Send-TeamsChat -Identity erick@vkrinc.onmicrosoft.com,torres@vkrinc.onmicrosoft.com `
+    Send-TeamsChat -Identities erick@vkrinc.onmicrosoft.com,torres@vkrinc.onmicrosoft.com -Topic 'Vale Group' -Message 'Hello' -Importance Urgent
+    Send-TeamsChat -Identities erick@vkrinc.onmicrosoft.com,torres@vkrinc.onmicrosoft.com `
     -Topic 'Vale Group' -Message 'Hello' -ChatID '19:2fexxxxxxxxxxxxxxxxxxxxxxxxxxx93@thread.v2' -Importance Urgent
+    
+    Send-TeamsChat -Message 'Hello' -ChatID '19:2fexxxxxxxxxxxxxxxxxxxxxxxxxxx93@thread.v2'
 #>
 #Requires -Modules Microsoft.Graph.Teams
 
@@ -54,14 +56,14 @@ function Send-TeamsGroupChat {
     param (
         [Parameter(
             Position  = 0,
-            Mandatory = $true
+            Mandatory = $false
         )]
         [array]
         $Identities,
 
         [Parameter(
             Position  = 1,
-            Mandatory = $true
+            Mandatory = $false
         )]
         [string]
         $Topic,
