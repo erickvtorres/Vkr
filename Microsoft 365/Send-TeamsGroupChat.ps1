@@ -43,11 +43,11 @@
         Send user an alert each 2 minutes until they read the message
     
 .EXAMPLE
-    Send-TeamsChat -Identities erick@vkrinc.onmicrosoft.com,torres@vkrinc.onmicrosoft.com -Topic 'Vale Group' -Message 'Hello' -Importance Urgent
-    Send-TeamsChat -Identities erick@vkrinc.onmicrosoft.com,torres@vkrinc.onmicrosoft.com `
+    Send-TeamsGroupChat -Identities erick@vkrinc.onmicrosoft.com,torres@vkrinc.onmicrosoft.com -Topic 'Vale Group' -Message 'Hello' -Importance Urgent
+    Send-TeamsGroupChat -Identities erick@vkrinc.onmicrosoft.com,torres@vkrinc.onmicrosoft.com `
     -Topic 'Vale Group' -Message 'Hello' -ChatID '19:2fexxxxxxxxxxxxxxxxxxxxxxxxxxx93@thread.v2' -Importance Urgent
     
-    Send-TeamsChat -Message 'Hello' -ChatID '19:2fexxxxxxxxxxxxxxxxxxxxxxxxxxx93@thread.v2'
+    Send-TeamsGroupChat -Message 'Hello' -ChatID '19:2fexxxxxxxxxxxxxxxxxxxxxxxxxxx93@thread.v2'
 #>
 #Requires -Modules Microsoft.Graph.Teams
 
