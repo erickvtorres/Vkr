@@ -10,14 +10,14 @@ Hi,
   - <strong><a href="https://github.com/erickvtorres/Vkr/tree/main/Active%20Directory/User">User</a>:</strong> AD User management scritps
   - <strong><a href="https://github.com/erickvtorres/Vkr/tree/main/Active%20Directory/Computer">Computer</a>:</strong> AD Computer management scritps
 
-<strong>Microsoft 365</strong>
+- [ ]  <strong>Microsoft 365</strong>
 - <strong><a href="https://github.com/erickvtorres/Vkr/blob/main/Microsoft%20365/Send-TeamsChat.ps1">Send-TeamsChat</a>:</strong> Send Teams Chat.
 - <strong><a href="https://github.com/erickvtorres/Vkr/blob/main/Microsoft%20365/Send-TeamsGroupChat.ps1">Send-TeamsGroupChat</a>:</strong> Send Teams Group Chat.
 
-<strong>Hyper-V</strong>
+- [ ]  <strong>Hyper-V</strong>
 - <strong><a href="https://github.com/erickvtorres/Vkr/blob/main/Hyper-V/Get-ClusterVMs.ps1">Get-ClusterVMs</a>:</strong> Export Cluster Hyper-V VMs easily.
 - <strong><a href="https://github.com/erickvtorres/Vkr/blob/main/Hyper-V/Set-VMResourceMetering.ps1">Set-VMResourceMetering</a>:</strong> Get status, enable or disable VM Resource Metering.
 
-<strong>Tools</strong>
+- [ ]  <strong>Tools</strong>
 - <strong><a href="https://github.com/erickvtorres/Vkr/blob/main/Tools/Get-DellWarranty.ps1">Get-DellWarranty</a>:</strong> Get Dell devices warranty with API.
 - <strong><a href="https://github.com/erickvtorres/Vkr/blob/main/Tools/Send-Telegram.ps1">Send-Telegram</a>:</strong> Send message to Telegram.
