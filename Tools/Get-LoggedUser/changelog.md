@@ -1,4 +1,4 @@
-# Get-LoggedUser!
+# Get-LoggedUser
 
 This module is very simple, made to help to convert result from quser.exe to PowerShell object.
 
