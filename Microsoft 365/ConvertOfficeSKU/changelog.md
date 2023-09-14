@@ -2,6 +2,10 @@
 
 Convert Office SKU IDs to friendly names based on the Microsoft License Service Plan Reference.
 
+## Version 0.0.2
+
+- **Fix**: # Root Module fixed
+
 ## Version 0.0.1
 
 - **Used Microsoft Docs**: # Product names and service plan identifiers for licensing: Article - 08/14/2023
