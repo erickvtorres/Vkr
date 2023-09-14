@@ -4,7 +4,7 @@ function Convert-OfficeSku {
     Convert SKU to Friedly Name.
 
 .DESCRIPTION
-    Convert Office SKU IDs to friendly name, base on Microsoft License Service Plan Reference.
+    Convert Office SKU IDs to friendly names based on the Microsoft License Service Plan Reference.
 
 .LINK
     .Linkedin:      https://www.linkedin.com/in/erickvtorres/
@@ -16,7 +16,7 @@ function Convert-OfficeSku {
     .Contact:       ericktorres@hotmail.com.br
     .Date:          2023-09-13
     .LastUpdate:    2023-09-13
-    .Version:       0.0.1
+    .Version:       0.0.2
 
 .PARAMETER All
     List all licenses available
