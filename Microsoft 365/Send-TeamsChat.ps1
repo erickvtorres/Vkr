@@ -1,6 +1,7 @@
+function Send-TeamsChat {
 <#
 .SYNOPSIS
-    Send teams chat New-MgChatMessage from Microsoft.Graph Module.
+    Send teams chat using New-MgChatMessage from Microsoft.Graph Module.
 
 .DESCRIPTION
     Send teams chat sir.
@@ -15,8 +16,8 @@
     .Creator:       Erick Torres do Vale
     .Contact:       ericktorres@hotmail.com.br
     .Date:          2022-11-08
-    .LastUpdate:    2023-03-28
-    .Version:       1.0.1
+    .LastUpdate:    2024-02-21
+    .Version:       1.0.2
 
 .PARAMETER Identity
     Accetps userPrincipalName or MgUserID
@@ -37,66 +38,47 @@
     Send-TeamsChat -Identity erick@vkrinc.onmicrosoft.com -Message 'Hello' -Importance Urgent    
 #>
 #Requires -Modules Microsoft.Graph.Teams
-
-function Send-TeamsChat {
     [CmdletBinding()]
     param (
-        [Parameter(
-            Position  = 0,
-            Mandatory = $true
-        )]
-        [string]
-        $Identity,
+        [Parameter(Position = 0, Mandatory = $true)]
+        [string]$Identity,
 
-        [Parameter(
-            Position  = 1,
-            Mandatory = $true
-        )]
-        [string]
-        $Message,
+        [Parameter(Position = 1, Mandatory = $true)]
+        [string]$Message,
 
-        [Parameter(
-            Position  = 2,
-            Mandatory = $false
-        )]
-        [ValidateSet(
-            'Normal','High','Urgent'
-        )]
-        [string]
-        $Importance
+        [Parameter(Position = 2, Mandatory = $false)]
+        [ValidateSet('Normal','High','Urgent')]
+        [string]$Importance = 'Normal'
     )
     
     begin {
-        if (-Not $Importance){
-            $Importance = 'Normal'
+        if (Get-MgContext){
+            Disconnect-MgGraph
         }
-    
-        if (-Not (Get-MgContext)){
-            $Body =  @{
-                Grant_Type    = 'password'
-                Scope         = 'https://graph.microsoft.com/.default'
-                Client_Id     = '<your client id>'
-                Client_Secret = '<your client secret | do not hardcode>'
-                username      = '<your account username'
-                password      = '<your account password | do not hardcode'
-            }
-    
-            $Rest = @{
-                Uri    = "https://login.microsoftonline.com/<your tenant id>/oauth2/v2.0/token"
-                Method = 'Post'
-                Body   = $Body
-            }
-            
-            $Connect = Invoke-RestMethod @Rest
-            $Token   = $Connect.access_token
+        $Body =  @{
+            Grant_Type    = 'password'
+            Scope         = 'https://graph.microsoft.com/.default'
+            Client_Id     = '<your client id>'
+            Client_Secret = '<your client secret | do not hardcode>'
+            username      = '<your account username'
+            password      = '<your account password | do not hardcode'
+        }
 
-            try {
-                Connect-MgGraph -AccessToken $Token
-            }
-            catch {
-                Write-Error -Message $_.Exception.Message
-                Break
-            }
+        $Rest = @{
+            Uri    = "https://login.microsoftonline.com/4614929d-91d7-4e1f-9846-8b09a7c22860/oauth2/v2.0/token"
+            Method = 'Post'
+            Body   = $Body
+        }
+        
+        $Connect = Invoke-RestMethod @Rest
+        $Token   = $Connect.access_token
+
+        try {
+            Connect-MgGraph -AccessToken ($Token | ConvertTo-SecureString -AsPlainText -Force) -NoWelcome
+        }
+        catch {
+            Write-Error -Message $_.Exception.Message
+            Break
         }
     }
     
@@ -108,13 +90,13 @@ function Send-TeamsChat {
                 Members  = @(
                     @{
                         '@odata.type'     = '#microsoft.graph.aadUserConversationMember'
-                        Roles             = @('owner')
-                        'User@odata.bind' = "https://graph.microsoft.com/v1.0/users('" + (Get-MgUser -UserId (Get-MgContext).account).id + "')"
+                        roles             = @('owner')
+                        'user@odata.bind' = "https://graph.microsoft.com/v1.0/users('" + (Get-MgUser -UserId (Get-MgContext).account).id + "')"
                     }
                     @{
                         '@odata.type'     = '#microsoft.graph.aadUserConversationMember'
-                        Roles             = @('owner')
-                        'User@odata.bind' = "https://graph.microsoft.com/v1.0/users('" + $TeamsUser.id + "')"
+                        roles             = @('owner')
+                        'user@odata.bind' = "https://graph.microsoft.com/v1.0/users('" + $TeamsUser.id + "')"
                     }
                 )
             }
