@@ -107,8 +107,9 @@ function Send-TeamsChat {
                 Content     = $Message
             }
 
-            New-MgChatMessage -ChatId $ChatSession.ID -Body $Body -Importance $Importance
+            $MgChat = New-MgChatMessage -ChatId $ChatSession.ID -Body $Body -Importance $Importance
             Write-Output "Teams chat message sent to $($TeamsUser.DisplayName)"
+            Write-Verbose -Message "ChatId: $($MgChat.ChatId)"
         }
         catch {
             Write-Warning -Message $_.Exception.Message
